@@ -25,8 +25,9 @@ export class TarefasComponent implements OnInit {
   usuarios: any;
 
   ngOnInit() {
-    // this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.134:6001/kanban', {skipNegotiation: true,
-    this.hubConnection = new HubConnectionBuilder().withUrl('http://localhost:5000/kanban', {skipNegotiation: true,
+    // this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.127:6001/tarefas', {skipNegotiation: true,
+    this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.134:6001/kanban', {skipNegotiation: true,
+    // this.hubConnection = new HubConnectionBuilder().withUrl('http://localhost:5000/kanban', {skipNegotiation: true,
     transport: HttpTransportType.WebSockets}).build();
 
     console.log('HUB:')
@@ -44,9 +45,9 @@ export class TarefasComponent implements OnInit {
       this.tarefasDone = response.done;
     });
 
-    this.getTarefas();
-    this.getUsuarios();
-    this.getTarefasStatus();
+    // this.getTarefas();
+    // this.getUsuarios();
+    // this.getTarefasStatus();
   }
 
   public sendMessage(): void {
