@@ -25,17 +25,20 @@ export class TarefasComponent implements OnInit {
   usuarios: any;
 
   ngOnInit() {
-    // this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.127:6001/tarefas', {skipNegotiation: true,
+    // this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.134:6001/kanban', {skipNegotiation: true,
     this.hubConnection = new HubConnectionBuilder().withUrl('http://localhost:5000/kanban', {skipNegotiation: true,
     transport: HttpTransportType.WebSockets}).build();
 
+    console.log('HUB:')
+    console.log(this.hubConnection);
+
     this.hubConnection.
       start()
-      .then(() => console.log('Connection started'))
+      .then(() => this.hubConnection
+      .invoke('getEnviar'))
       .catch(err => console.log('Error while establishing connection'));
 
-
-    this.hubConnection.on('sendToAll', (response: any) => {
+    this.hubConnection.on('Enviar', (response: any) => {
       this.tarefasTodo = response.todo;
       this.tarefasInPro = response.inpro;
       this.tarefasDone = response.done;

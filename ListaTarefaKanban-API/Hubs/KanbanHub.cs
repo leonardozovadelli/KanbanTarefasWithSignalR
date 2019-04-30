@@ -13,7 +13,7 @@ namespace ListaTarefaKanban_API.Hubs
         
         public async void getEnviar(){
             var tarefa = await _repo.GetTarefaStatusAsync();
-            await Clients.All.Enviar(tarefa);
+            await Clients.All.Geral(tarefa);
         }
 
     }
