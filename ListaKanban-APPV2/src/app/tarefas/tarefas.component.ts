@@ -25,10 +25,12 @@ export class TarefasComponent implements OnInit {
   usuarios: any;
 
   ngOnInit() {
-    // this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.127:6001/tarefas', {skipNegotiation: true,
-    this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.134:6001/kanban', {skipNegotiation: true,
-    // this.hubConnection = new HubConnectionBuilder().withUrl('http://localhost:5000/kanban', {skipNegotiation: true,
-    transport: HttpTransportType.WebSockets}).build();
+    this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.127:6001/kanban', {
+      skipNegotiation: true,
+      // this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.134:6001/kanban', {skipNegotiation: true,
+      // this.hubConnection = new HubConnectionBuilder().withUrl('http://localhost:5000/kanban', {skipNegotiation: true,
+      transport: HttpTransportType.WebSockets
+    }).build();
 
     console.log('HUB:')
     console.log(this.hubConnection);
@@ -36,7 +38,7 @@ export class TarefasComponent implements OnInit {
     this.hubConnection.
       start()
       .then(() => this.hubConnection
-      .invoke('getEnviar'))
+        .invoke('getEnviar'))
       .catch(err => console.log('Error while establishing connection'));
 
     this.hubConnection.on('Enviar', (response: any) => {
@@ -52,7 +54,7 @@ export class TarefasComponent implements OnInit {
 
   public sendMessage(): void {
     this.hubConnection
-      .invoke('sendToAll', this.obj)
+      .invoke('getEnviar')
       .catch(err => console.log(err));
   }
 
@@ -96,32 +98,63 @@ export class TarefasComponent implements OnInit {
     return classes[prio];
   }
 
+  mudarSignalR(event: CdkDragDrop<Tarefa[]>) {
+    this.hubConnection
+      .invoke('getEnviar', event.container.data[event.currentIndex])
+      .catch(err => console.log(err));
+  }
 
-  // Movimentar os Cards, com isso alterar os status
+
   onDrop(event: CdkDragDrop<Tarefa[]>) {
     if (event.previousContainer !== event.container) {
       transferArrayItem(event.previousContainer.data,
         event.container.data,
         event.previousIndex, event.currentIndex);
       const status = parseInt(event.container.id, 10);
+      console.log(event.container.data[event.currentIndex]); // OBJETO ALTERADO
       if (status === 0) {
-        this.editarTarefa(event.container.data[event.currentIndex].id, status, event.container.data[event.currentIndex]);
+        this.mudarSignalR(event);
       }
       if (status === 1) {
-        this.editarTarefa(event.container.data[event.currentIndex].id, status, event.container.data[event.currentIndex]);
+        this.mudarSignalR(event);
       }
       if (status === 2) {
-        this.editarTarefa(event.container.data[event.currentIndex].id, status, event.container.data[event.currentIndex]);
+        this.mudarSignalR(event);
       }
+
+
     } else {
       moveItemInArray(event.container.data,
         event.previousIndex, event.currentIndex);
     }
   }
 
+  // Movimentar os Cards, com isso alterar os status
+  // onDrop(event: CdkDragDrop<Tarefa[]>) {
+  //   if (event.previousContainer !== event.container) {
+  //     transferArrayItem(event.previousContainer.data,
+  //       event.container.data,
+  //       event.previousIndex, event.currentIndex);
+  //     const status = parseInt(event.container.id, 10);
+  //     // console.log(event.container.data[event.currentIndex]);// OBJETO ALTERADO
+  //     if (status === 0) {
+  //     this.editarTarefa(event.container.data[event.currentIndex].id, status, event.container.data[event.currentIndex]);
+  //     }
+  //     if (status === 1) {
+  //       this.editarTarefa(event.container.data[event.currentIndex].id, status, event.container.data[event.currentIndex]);
+  //     }
+  //     if (status === 2) {
+  //       this.editarTarefa(event.container.data[event.currentIndex].id, status, event.container.data[event.currentIndex]);
+  //     }
+  //   } else {
+  //     moveItemInArray(event.container.data,
+  //       event.previousIndex, event.currentIndex);
+  //   }
+  // }
+
   getTarefasStatus() {
     this.http.get('http://localhost:5000/api/tarefas').subscribe(
-    // this.http.get('http://192.168.1.127:6001/tarefas').subscribe(
+      // this.http.get('http://192.168.1.127:6001/tarefas').subscribe(
       (response: any) => {
         this.tarefasTodo = response.todo;
         this.tarefasInPro = response.inpro;
