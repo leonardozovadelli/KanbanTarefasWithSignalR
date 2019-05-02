@@ -25,8 +25,7 @@ export class TarefasComponent implements OnInit {
   usuarios: any;
 
   ngOnInit() {
-    this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.127:6001/kanban', {
-      skipNegotiation: true,
+    this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.127:6001/kanban', {skipNegotiation: true,
       // this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.134:6001/kanban', {skipNegotiation: true,
       // this.hubConnection = new HubConnectionBuilder().withUrl('http://localhost:5000/kanban', {skipNegotiation: true,
       transport: HttpTransportType.WebSockets
@@ -38,7 +37,7 @@ export class TarefasComponent implements OnInit {
     this.hubConnection.
       start()
       .then(() => this.hubConnection
-        .invoke('getEnviar'))
+      .invoke('getEnviar'))
       .catch(err => console.log('Error while establishing connection'));
 
     this.hubConnection.on('Enviar', (response: any) => {
@@ -52,11 +51,11 @@ export class TarefasComponent implements OnInit {
     // this.getTarefasStatus();
   }
 
-  public sendMessage(): void {
-    this.hubConnection
-      .invoke('getEnviar')
-      .catch(err => console.log(err));
-  }
+  // public sendMessage(): void {
+  //   this.hubConnection
+  //     .invoke('getEnviar')
+  //     .catch(err => console.log(err));
+  // }
 
   // ngModel do filtro
   valorUsuario: any = 'todos';
@@ -99,8 +98,14 @@ export class TarefasComponent implements OnInit {
   }
 
   mudarSignalR(event: CdkDragDrop<Tarefa[]>) {
+    console.log('Event:');
+    console.log(event.container.data[event.currentIndex]);
+
+    const status = parseInt(event.container.id, 10);
+    event.container.data[event.currentIndex].status = status;
+
     this.hubConnection
-      .invoke('getEnviar', event.container.data[event.currentIndex])
+      .invoke('UpdateKanban', event.container.data[event.currentIndex].id, event.container.data[event.currentIndex].status)
       .catch(err => console.log(err));
   }
 
@@ -111,7 +116,7 @@ export class TarefasComponent implements OnInit {
         event.container.data,
         event.previousIndex, event.currentIndex);
       const status = parseInt(event.container.id, 10);
-      console.log(event.container.data[event.currentIndex]); // OBJETO ALTERADO
+      console.log(event.container.data[event.currentIndex].id, event.container.data[event.currentIndex].status); // OBJETO ALTERADO
       if (status === 0) {
         this.mudarSignalR(event);
       }
@@ -121,8 +126,6 @@ export class TarefasComponent implements OnInit {
       if (status === 2) {
         this.mudarSignalR(event);
       }
-
-
     } else {
       moveItemInArray(event.container.data,
         event.previousIndex, event.currentIndex);
@@ -138,13 +141,16 @@ export class TarefasComponent implements OnInit {
   //     const status = parseInt(event.container.id, 10);
   //     // console.log(event.container.data[event.currentIndex]);// OBJETO ALTERADO
   //     if (status === 0) {
-  //     this.editarTarefa(event.container.data[event.currentIndex].id, status, event.container.data[event.currentIndex]);
+  //     // this.editarTarefa(event.container.data[event.currentIndex].id, status, event.container.data[event.currentIndex]);
+  //     this.mudarSignalR(event);
   //     }
   //     if (status === 1) {
-  //       this.editarTarefa(event.container.data[event.currentIndex].id, status, event.container.data[event.currentIndex]);
+  //       // this.editarTarefa(event.container.data[event.currentIndex].id, status, event.container.data[event.currentIndex]);
+  //       this.mudarSignalR(event);
   //     }
   //     if (status === 2) {
-  //       this.editarTarefa(event.container.data[event.currentIndex].id, status, event.container.data[event.currentIndex]);
+  //       // this.editarTarefa(event.container.data[event.currentIndex].id, status, event.container.data[event.currentIndex]);
+  //       this.mudarSignalR(event);
   //     }
   //   } else {
   //     moveItemInArray(event.container.data,
@@ -205,6 +211,7 @@ export class TarefasComponent implements OnInit {
     console.log('EditarTarefa: ');
     console.log(tarefa);
     tarefa.status = status;
+    // this.http.put(`http://localhost:5000/api/tarefas/${id}`, tarefa).subscribe(
     this.http.put(`http://localhost:5000/api/tarefas/${id}`, tarefa).subscribe(
       () => {
         console.log('Deu certo');

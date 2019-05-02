@@ -16,5 +16,9 @@ namespace ListaTarefaKanban_API.Hubs
             await Clients.All.Geral(tarefa);
         }
 
+        // public async void mudarStatus(){
+        //     var tarefa = await _repo.Get();
+        // }
+
     }
 }

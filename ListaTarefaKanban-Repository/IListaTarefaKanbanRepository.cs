@@ -12,6 +12,7 @@ namespace ListaTarefaKanban_Repository
         Task<bool> SaveChangesAsync();
 
         //TAREFAS
+        Task<Tarefa> GetAllTarefasAsyncById(int id);
         Task<Tarefa[]> GetAllTarefaAsync();
         Task<object> GetAllTarefaResponsavel(string responsavelNome);
         Task<Usuario[]> GetAllResponsavelAsync();

@@ -118,5 +118,16 @@ namespace ListaTarefaKanban_Repository
 
             return await query.ToArrayAsync();
         }
+
+        public async Task<Tarefa> GetAllTarefasAsyncById(int id)
+        {
+            IQueryable<Tarefa> query = _context.Tarefas
+            .Include(c => c.Responsavel)
+           .Where(c => c.Id == id);
+
+            query = query.OrderBy(c => c.Prioridade);
+
+            return await query.FirstOrDefaultAsync();
+        }
     }
 }
