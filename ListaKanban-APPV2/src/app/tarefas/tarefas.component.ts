@@ -1,3 +1,4 @@
+import { Usuario } from './../_models/Usuario';
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CdkDragDrop, transferArrayItem, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -18,47 +19,103 @@ export class TarefasComponent implements OnInit {
   private hubConnection: HubConnection;
   obj: Tarefa;
 
+  // ngModel do filtro
+  valorUsuario: any = 'todos';
+
   tarefasTodo: Tarefa[] = [];
   tarefasInPro: Tarefa[] = [];
   tarefasDone: Tarefa[] = [];
   tarefas: Tarefa[] = [];
-  usuarios: any;
+  usuarios: Usuario[] = [];
 
-  ngOnInit() {
-    this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.127:6001/kanban', {skipNegotiation: true,
-      // this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.134:6001/kanban', {skipNegotiation: true,
-      // this.hubConnection = new HubConnectionBuilder().withUrl('http://localhost:5000/kanban', {skipNegotiation: true,
-      transport: HttpTransportType.WebSockets
-    }).build();
-
-    console.log('HUB:')
-    console.log(this.hubConnection);
-
-    this.hubConnection.
-      start()
-      .then(() => this.hubConnection
-      .invoke('getEnviar'))
-      .catch(err => console.log('Error while establishing connection'));
-
+  GetTarefas() {
+    // this.hubConnection.on('EnviarTarefa', (response: any) => {
     this.hubConnection.on('Enviar', (response: any) => {
+      // this.hubConnection.on('EnviarCalendar', (response: any) => {
       this.tarefasTodo = response.todo;
       this.tarefasInPro = response.inpro;
       this.tarefasDone = response.done;
     });
-
-    // this.getTarefas();
-    // this.getUsuarios();
-    // this.getTarefasStatus();
+  }
+  GetUsuario() {
+    this.hubConnection.on('EnviarUsuario', (response: any) => {
+      this.usuarios = response;
+    });
   }
 
-  // public sendMessage(): void {
-  //   this.hubConnection
-  //     .invoke('getEnviar')
-  //     .catch(err => console.log(err));
-  // }
+  GetTarefasUsuarios() {
+    this.GetTarefas();
+    this.GetUsuario();
+  }
 
-  // ngModel do filtro
-  valorUsuario: any = 'todos';
+  ngOnInit() {
+    // this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.127:6001/kanban', {skipNegotiation: true, // Thiago
+    this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.134:6002/kanban', {
+      skipNegotiation: true, // Matheus
+      transport: HttpTransportType.WebSockets
+    }).build();
+
+    this.hubConnection.
+      start()
+      .then(() => this.hubConnection
+        .invoke('getEnviar'))
+      .catch(err => console.log('Error while establishing connection'));
+
+    console.log('HUB:')
+    console.log(this.hubConnection);
+
+    this.GetTarefasUsuarios();
+
+  }
+
+  mudarSignalR(event: CdkDragDrop<Tarefa[]>) {
+    const status = parseInt(event.container.id, 10);
+    event.container.data[event.currentIndex].status = status;
+
+    this.hubConnection
+      .invoke('UpdateKanban', event.container.data[event.currentIndex].id, event.container.data[event.currentIndex].status)
+      .catch(err => console.log(err));
+  }
+
+  FiltrarUsuarioSignalR(nome: string) {
+    if (nome.toLocaleLowerCase() === 'todos') {
+      this.hubConnection
+        .invoke('getEnviar');
+      this.GetTarefas();
+    } else {
+      this.hubConnection
+        .invoke('FiltrarUsuarioKanban', nome)
+        .catch(err => console.log(err));
+
+      this.hubConnection.on('EnviarTarefa', (response: any) => {
+        this.tarefasTodo = response.todo;
+        this.tarefasInPro = response.inpro;
+        this.tarefasDone = response.done;
+      });
+    }
+  }
+
+
+  onDrop(event: CdkDragDrop<Tarefa[]>) {
+    if (event.previousContainer !== event.container) {
+      transferArrayItem(event.previousContainer.data,
+        event.container.data,
+        event.previousIndex, event.currentIndex);
+      const status = parseInt(event.container.id, 10);
+      if (status === 0) {
+        this.mudarSignalR(event);
+      }
+      if (status === 1) {
+        this.mudarSignalR(event);
+      }
+      if (status === 2) {
+        this.mudarSignalR(event);
+      }
+    } else {
+      moveItemInArray(event.container.data,
+        event.previousIndex, event.currentIndex);
+    }
+  }
 
   inserirIcon(esfPrev: number, esfReal: number) {
     let classes = [];
@@ -96,130 +153,4 @@ export class TarefasComponent implements OnInit {
     ];
     return classes[prio];
   }
-
-  mudarSignalR(event: CdkDragDrop<Tarefa[]>) {
-    console.log('Event:');
-    console.log(event.container.data[event.currentIndex]);
-
-    const status = parseInt(event.container.id, 10);
-    event.container.data[event.currentIndex].status = status;
-
-    this.hubConnection
-      .invoke('UpdateKanban', event.container.data[event.currentIndex].id, event.container.data[event.currentIndex].status)
-      .catch(err => console.log(err));
-  }
-
-
-  onDrop(event: CdkDragDrop<Tarefa[]>) {
-    if (event.previousContainer !== event.container) {
-      transferArrayItem(event.previousContainer.data,
-        event.container.data,
-        event.previousIndex, event.currentIndex);
-      const status = parseInt(event.container.id, 10);
-      console.log(event.container.data[event.currentIndex].id, event.container.data[event.currentIndex].status); // OBJETO ALTERADO
-      if (status === 0) {
-        this.mudarSignalR(event);
-      }
-      if (status === 1) {
-        this.mudarSignalR(event);
-      }
-      if (status === 2) {
-        this.mudarSignalR(event);
-      }
-    } else {
-      moveItemInArray(event.container.data,
-        event.previousIndex, event.currentIndex);
-    }
-  }
-
-  // Movimentar os Cards, com isso alterar os status
-  // onDrop(event: CdkDragDrop<Tarefa[]>) {
-  //   if (event.previousContainer !== event.container) {
-  //     transferArrayItem(event.previousContainer.data,
-  //       event.container.data,
-  //       event.previousIndex, event.currentIndex);
-  //     const status = parseInt(event.container.id, 10);
-  //     // console.log(event.container.data[event.currentIndex]);// OBJETO ALTERADO
-  //     if (status === 0) {
-  //     // this.editarTarefa(event.container.data[event.currentIndex].id, status, event.container.data[event.currentIndex]);
-  //     this.mudarSignalR(event);
-  //     }
-  //     if (status === 1) {
-  //       // this.editarTarefa(event.container.data[event.currentIndex].id, status, event.container.data[event.currentIndex]);
-  //       this.mudarSignalR(event);
-  //     }
-  //     if (status === 2) {
-  //       // this.editarTarefa(event.container.data[event.currentIndex].id, status, event.container.data[event.currentIndex]);
-  //       this.mudarSignalR(event);
-  //     }
-  //   } else {
-  //     moveItemInArray(event.container.data,
-  //       event.previousIndex, event.currentIndex);
-  //   }
-  // }
-
-  getTarefasStatus() {
-    this.http.get('http://localhost:5000/api/tarefas').subscribe(
-      // this.http.get('http://192.168.1.127:6001/tarefas').subscribe(
-      (response: any) => {
-        this.tarefasTodo = response.todo;
-        this.tarefasInPro = response.inpro;
-        this.tarefasDone = response.done;
-      }, error => {
-        console.log(error);
-      }
-    );
-  }
-
-  getTarefas() {
-    this.http.get('http://localhost:5000/api/tarefas').subscribe(
-      (response: Tarefa[]) => {
-        this.tarefas = response;
-      }, error => {
-        console.log(error);
-      }
-    );
-  }
-
-  getTarefasPorUsuario(nome: string) {
-    if (nome.toLocaleLowerCase() === 'todos') {
-      this.getTarefasStatus();
-    } else {
-      this.http.get('http://localhost:5000/api/tarefas/' + nome).subscribe(
-        (response: any) => {
-          this.tarefasTodo = response.todo;
-          this.tarefasInPro = response.inpro;
-          this.tarefasDone = response.done;
-        }, error => {
-          console.log(error);
-        }
-      );
-    }
-  }
-
-  getUsuarios() {
-    this.http.get('http://localhost:5000/api/usuarios').subscribe(
-      response => {
-        this.usuarios = response;
-      }, error => {
-        console.log(error);
-      }
-    );
-  }
-
-  editarTarefa(id: number, status: number, tarefa: Tarefa) {
-    console.log('EditarTarefa: ');
-    console.log(tarefa);
-    tarefa.status = status;
-    // this.http.put(`http://localhost:5000/api/tarefas/${id}`, tarefa).subscribe(
-    this.http.put(`http://localhost:5000/api/tarefas/${id}`, tarefa).subscribe(
-      () => {
-        console.log('Deu certo');
-      }, error => {
-        console.log(error);
-      }
-    );
-  }
-
-
 }
