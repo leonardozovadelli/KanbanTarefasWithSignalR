@@ -88,17 +88,27 @@ export class TarefasComponent implements OnInit {
     const status = parseInt(event.container.id, 10);
     event.container.data[event.currentIndex].status = status;
 
-    this.hubConnection
+    if (this.valorUsuario === 'todos') {
+      this.hubConnection
       .invoke('UpdateKanban',
         event.container.data[event.currentIndex].responsavel.nome,
         event.container.data[event.currentIndex].id,
         event.container.data[event.currentIndex].status)
       .catch(err => console.log(err));
-    if (this.valorUsuario === 'todos') {
+
       this.hubConnection.
         invoke('getKanban')
         .catch(err => console.log(err));
+    } else { 
+      this.hubConnection
+      .invoke('UpdateKanban',
+        event.container.data[event.currentIndex].responsavel.nome,
+        event.container.data[event.currentIndex].id,
+        event.container.data[event.currentIndex].status)
+      .catch(err => console.log(err));
     }
+
+
   }
 
 
