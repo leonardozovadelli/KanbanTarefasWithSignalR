@@ -29,8 +29,17 @@ export class TarefasComponent implements OnInit {
   usuarios: Usuario[] = [];
 
   GetTarefas() {
-    // this.hubConnection.on('EnviarTarefa', (response: any) => {
-    this.hubConnection.on('Enviar', (response: any) => {
+    this.hubConnection.on('EnviarTarefa', (response: any) => {
+    // this.hubConnection.on('Enviar', (response: any) => {
+      // this.hubConnection.on('EnviarCalendar', (response: any) => {
+      this.tarefasTodo = response.todo;
+      this.tarefasInPro = response.inpro;
+      this.tarefasDone = response.done;
+    });
+  }
+  GetAllFiltro() {
+    this.hubConnection.on('EnviarFiltro', (response: any) => {
+      // this.hubConnection.on('Enviar', (response: any) => {
       // this.hubConnection.on('EnviarCalendar', (response: any) => {
       this.tarefasTodo = response.todo;
       this.tarefasInPro = response.inpro;
@@ -49,9 +58,8 @@ export class TarefasComponent implements OnInit {
   }
 
   ngOnInit() {
-    // this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.127:6001/kanban', {skipNegotiation: true, // Thiago
-    this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.134:6002/kanban', {
-      skipNegotiation: true, // Matheus
+    this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.127:6001/kanban', {skipNegotiation: true, // Thiago
+    // this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.134:6002/kanban', {skipNegotiation: true, // Matheus
       transport: HttpTransportType.WebSockets
     }).build();
 
@@ -77,21 +85,18 @@ export class TarefasComponent implements OnInit {
       .catch(err => console.log(err));
   }
 
+
   FiltrarUsuarioSignalR(nome: string) {
     if (nome.toLocaleLowerCase() === 'todos') {
       this.hubConnection
-        .invoke('getEnviar');
+        .invoke('GetFiltro');
       this.GetTarefas();
     } else {
       this.hubConnection
         .invoke('FiltrarUsuarioKanban', nome)
         .catch(err => console.log(err));
 
-      this.hubConnection.on('EnviarTarefa', (response: any) => {
-        this.tarefasTodo = response.todo;
-        this.tarefasInPro = response.inpro;
-        this.tarefasDone = response.done;
-      });
+      this.GetAllFiltro();
     }
   }
 
