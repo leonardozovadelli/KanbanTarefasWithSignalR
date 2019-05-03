@@ -30,8 +30,19 @@ export class TarefasComponent implements OnInit {
 
   GetTarefas() {
     this.hubConnection.on('EnviarTarefa', (response: any) => {
-    // this.hubConnection.on('Enviar', (response: any) => {
+      // this.hubConnection.on('Enviar', (response: any) => {
       // this.hubConnection.on('EnviarCalendar', (response: any) => {
+      this.tarefasTodo = response.todo;
+      this.tarefasInPro = response.inpro;
+      this.tarefasDone = response.done;
+    });
+  }
+  GetTarefasTodosUpdate() {
+    this.hubConnection.on('EnviarTodosKanban', (response: any) => {
+      // this.hubConnection.on('Enviar', (response: any) => {
+      // this.hubConnection.on('EnviarCalendar', (response: any) => {
+
+
       this.tarefasTodo = response.todo;
       this.tarefasInPro = response.inpro;
       this.tarefasDone = response.done;
@@ -58,20 +69,17 @@ export class TarefasComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.127:6001/kanban', {skipNegotiation: true, // Thiago
-    // this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.134:6002/kanban', {skipNegotiation: true, // Matheus
+    this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.127:6001/kanban', {
+      skipNegotiation: true, // Thiago
+      // this.hubConnection = new HubConnectionBuilder().withUrl('http://192.168.1.134:6002/kanban', {skipNegotiation: true, // Matheus
       transport: HttpTransportType.WebSockets
     }).build();
 
     this.hubConnection.
       start()
       .then(() => this.hubConnection
-        .invoke('getEnviar'))
+        .invoke('getKanban'))
       .catch(err => console.log('Error while establishing connection'));
-
-    console.log('HUB:')
-    console.log(this.hubConnection);
-
     this.GetTarefasUsuarios();
 
   }
@@ -81,8 +89,16 @@ export class TarefasComponent implements OnInit {
     event.container.data[event.currentIndex].status = status;
 
     this.hubConnection
-      .invoke('UpdateKanban', event.container.data[event.currentIndex].id, event.container.data[event.currentIndex].status)
+      .invoke('UpdateKanban',
+        event.container.data[event.currentIndex].responsavel.nome,
+        event.container.data[event.currentIndex].id,
+        event.container.data[event.currentIndex].status)
       .catch(err => console.log(err));
+    if (this.valorUsuario === 'todos') {
+      this.hubConnection.
+        invoke('getKanban')
+        .catch(err => console.log(err));
+    }
   }
 
 
@@ -90,7 +106,7 @@ export class TarefasComponent implements OnInit {
     if (nome.toLocaleLowerCase() === 'todos') {
       this.hubConnection
         .invoke('GetFiltro');
-      this.GetTarefas();
+      this.GetTarefasTodosUpdate();
     } else {
       this.hubConnection
         .invoke('FiltrarUsuarioKanban', nome)
